@@ -99,9 +99,14 @@ function bindModalEvents() {
 }
 
 /* ---------------- Toast 与系统通知 ---------------- */
-function hideToast(t) { t.classList.remove("show"); }
+function hideToast(t) {
+  t.classList.remove("show");
+  clearTimeout(t._timer);
+}
 /* showToast(icon, title, msg, ms, btn)
-   btn = { label, onClick } 可选操作按钮；弹窗自带 ✕ 手动关闭 */
+   btn = { label, onClick } 可选操作按钮；弹窗自带 ✕ 手动关闭。
+   自动关闭 = JS setTimeout 兜底 + CSS 动画（--toast-ms）双保险，
+   iOS Safari 定时器节流时由 CSS 动画保证准时收起。 */
 function showToast(icon, title, msg, ms = 6000, btn = null) {
   const t = $("#toast");
   t.innerHTML = `<span class="t-icon">${icon}</span>
@@ -110,7 +115,13 @@ function showToast(icon, title, msg, ms = 6000, btn = null) {
       <div class="t-msg">${esc(msg)}</div>
       ${btn ? `<button class="t-btn" type="button">${esc(btn.label)}</button>` : ""}
     </div>
-    <button class="t-close" type="button" aria-label="关闭">✕</button>`;
+    <button class="t-close" type="button" aria-label="关闭">✕</button>
+    <span class="t-progress"></span>`;
+  // 重启自动关闭动画（进度条 + 收起），保证连续弹窗每次都重新计时
+  t.style.animation = "none";
+  t.style.setProperty("--toast-ms", ms + "ms");
+  void t.offsetWidth;
+  t.style.animation = "";
   t.classList.add("show");
   clearTimeout(t._timer);
   t._timer = setTimeout(() => hideToast(t), ms);
@@ -131,7 +142,7 @@ function beep() {
     o.start(); o.stop(ctx.currentTime + 0.35);
   } catch (e) { /* noop */ }
 }
-function notify(icon, title, msg, btn = null, ms = 30000) {
+function notify(icon, title, msg, btn = null, ms = 15000) {
   if ("Notification" in window && Notification.permission === "granted") {
     try { new Notification(title, { body: msg, icon: undefined }); } catch (e) {}
   }

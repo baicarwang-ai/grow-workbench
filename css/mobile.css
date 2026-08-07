@@ -4,7 +4,8 @@
  * 将布局调整为 App 风格——左侧导航变为底部标签栏，卡片单列，模态全屏。
  * ========================================================================= */
 
-/* ---- Toast 升级：关闭按钮 + 操作按钮（桌面/手机通用） ---- */
+/* ---- Toast 升级：关闭按钮 + 操作按钮 + 自动关闭动画（桌面/手机通用） ---- */
+.toast { position: relative; overflow: hidden; }
 .t-body { flex: 1; min-width: 0; }
 .t-close {
   border: none; background: var(--card); border-radius: 50%;
@@ -24,6 +25,21 @@
   transition: transform .12s ease, box-shadow .12s ease;
 }
 .t-btn:active { transform: translateY(1px); box-shadow: var(--shadow-inset); }
+/* 自动关闭：CSS 动画兜底（不受 iOS 定时器节流影响），时长由 JS 的 --toast-ms 控制 */
+.toast {
+  animation: toast-auto-hide .35s ease var(--toast-ms, 6000ms) forwards;
+}
+@keyframes toast-auto-hide {
+  to { transform: translateX(-50%) translateY(120px); opacity: 0; visibility: hidden; }
+}
+/* 倒计时进度条 */
+.t-progress {
+  position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+  background: linear-gradient(90deg, var(--blue), #7aa8f0);
+  border-radius: 0 2px 2px 0;
+  animation: t-progress-shrink linear var(--toast-ms, 6000ms) forwards;
+}
+@keyframes t-progress-shrink { from { width: 100%; } to { width: 0; } }
 
 @media (max-width: 768px) {
 
