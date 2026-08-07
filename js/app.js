@@ -150,8 +150,22 @@ function notify(icon, title, msg, btn = null, ms = 15000) {
   beep();
 }
 function requestNotifyPermission() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
+  if (!("Notification" in window)) {
+    showToast("📲", "通知不可用", "请先把工作台「添加到主屏幕」再开启提醒（手机浏览器对网页通知有限制）。");
+    return;
+  }
+  const p = Notification.permission;
+  if (p === "granted") {
+    showToast("🔔", "通知已开启", "提醒会推送到手机通知栏，手表可同步收到。");
+    return;
+  }
+  if (p === "default") {
+    Notification.requestPermission().then((res) => {
+      if (res === "granted") showToast("🔔", "通知已开启", "提醒会推送到手机通知栏，Apple Watch / 手环可同步震动。");
+      else showToast("🔕", "通知被拒绝", "提醒只能页面内弹出。想手表收到，请在系统设置里允许通知后重开开关。");
+    }).catch(() => {});
+  } else {
+    showToast("🔕", "通知被关闭", "请到 系统设置 → 通知 中允许本应用通知，手表才能同步提醒。");
   }
 }
 
