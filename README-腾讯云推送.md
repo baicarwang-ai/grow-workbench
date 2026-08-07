@@ -45,10 +45,8 @@
    | VAPID_PUBLIC / VAPID_PRIVATE | 见 `.vapid-keys.txt` |
    | VAPID_SUBJECT | mailto:admin@grow-workbench.app |
    | TENCENT_SECRET_ID / TENCENT_SECRET_KEY | 你的 API 密钥 |
-3. 触发管理 → **创建触发器**：
-   - 定时触发：Cron 表达式 `0 */1 * * * * *`（每分钟）
-   - API 网关触发：路径 `/`，方法 ANY，发布到 `release`
-4. 复制 API 网关访问地址（形如 `https://service-xxxx-xxxx.gz.apigw.tencentcs.com/release/`），填入前端 `js/app.js` 的 `PUSH_SERVER`
+3. **创建函数 URL**：触发管理 → 创建触发器 → 类型选 **URL 访问**（Type=http，匿名访问、开启公网+CORS），生成 `https://xxxxx.ap-guangzhou.tencentscf.com` 公网地址
+4. 把函数 URL 填入前端 `js/app.js` 的 `PUSH_SERVER`
 
 ## 验证
 
