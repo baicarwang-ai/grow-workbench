@@ -34,6 +34,10 @@
       <div class="banner-head">
         <span class="pill pill-green">科学依据 · 数据来源</span>
         <button class="link-btn" data-open="science-modal">查看完整依据与来源 →</button>
+        <button class="banner-toggle" id="banner-toggle" aria-label="展开或折叠科学依据" aria-expanded="false">
+          <span class="bt-label">展开</span>
+          <span class="bt-arrow">▾</span>
+        </button>
       </div>
       <div class="banner-items" id="science-banner-items"></div>
     </div>
@@ -357,6 +361,19 @@
 
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    /* ---------------- 手机版：科学依据横幅折叠 ---------------- */
+    (function () {
+      var banner = document.getElementById("science-banner");
+      var toggle = document.getElementById("banner-toggle");
+      if (!banner || !toggle) return;
+      toggle.addEventListener("click", function () {
+        var open = banner.classList.toggle("open");
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+        toggle.querySelector(".bt-label").textContent = open ? "收起" : "展开";
+      });
+    })();
+  </script>
   <script>
     /* ---------------- 手机版：PWA 注册 & 安装引导 ---------------- */
     (function () {
