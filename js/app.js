@@ -99,12 +99,28 @@ function bindModalEvents() {
 }
 
 /* ---------------- Toast 与系统通知 ---------------- */
-function showToast(icon, title, msg, ms = 6000) {
+function hideToast(t) { t.classList.remove("show"); }
+/* showToast(icon, title, msg, ms, btn)
+   btn = { label, onClick } 可选操作按钮；弹窗自带 ✕ 手动关闭 */
+function showToast(icon, title, msg, ms = 6000, btn = null) {
   const t = $("#toast");
-  t.innerHTML = `<span class="t-icon">${icon}</span><div><div class="t-title">${esc(title)}</div><div class="t-msg">${esc(msg)}</div></div>`;
+  t.innerHTML = `<span class="t-icon">${icon}</span>
+    <div class="t-body">
+      <div class="t-title">${esc(title)}</div>
+      <div class="t-msg">${esc(msg)}</div>
+      ${btn ? `<button class="t-btn" type="button">${esc(btn.label)}</button>` : ""}
+    </div>
+    <button class="t-close" type="button" aria-label="关闭">✕</button>`;
   t.classList.add("show");
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove("show"), ms);
+  t._timer = setTimeout(() => hideToast(t), ms);
+  t.querySelector(".t-close").onclick = (e) => { e.stopPropagation(); hideToast(t); };
+  if (btn) {
+    t.querySelector(".t-btn").onclick = (e) => {
+      e.stopPropagation(); hideToast(t);
+      try { btn.onClick(); } catch (err) { console.error(err); }
+    };
+  }
 }
 function beep() {
   try {
@@ -115,11 +131,11 @@ function beep() {
     o.start(); o.stop(ctx.currentTime + 0.35);
   } catch (e) { /* noop */ }
 }
-function notify(icon, title, msg) {
+function notify(icon, title, msg, btn = null, ms = 30000) {
   if ("Notification" in window && Notification.permission === "granted") {
     try { new Notification(title, { body: msg, icon: undefined }); } catch (e) {}
   }
-  showToast(icon, title, msg);
+  showToast(icon, title, msg, ms, btn);
   beep();
 }
 function requestNotifyPermission() {
@@ -138,13 +154,15 @@ function checkReminders() {
       s.lastWater = now.getTime(); saveState();
       const today = todayStr();
       const got = (state.water[today] || []).length * 250;
-      notify("💧", "该喝水啦", `已喝 ${got}ml / 目标 ${state.profile.waterTargetMl}ml。起来喝一杯 250ml 吧！`);
+      notify("💧", "该喝水啦", `已喝 ${got}ml / 目标 ${state.profile.waterTargetMl}ml。喝完后点「喝完了」就好。`,
+        { label: "💧 喝完了", onClick: function () { addWater(); } });
     }
   }
   if (s.sitReminder) {
     if (now.getTime() - s.lastSit > s.sitInterval * 60000) {
       s.lastSit = now.getTime(); saveState();
-      notify("🧘", "久坐提醒", "已坐了一段时间，起身活动 2–3 分钟：拉伸、走动、靠墙静蹲。");
+      notify("🧘", "久坐提醒", "已坐了一段时间，起身活动 2–3 分钟。活动完点「已活动」就好。",
+        { label: "🧘 已活动", onClick: function () { logSit(); } });
     }
   }
 }
@@ -286,6 +304,7 @@ function addWater() {
   const t = todayStr();
   if (!state.water[t]) state.water[t] = [];
   state.water[t].push(timeHM(new Date()));
+  state.settings.lastWater = Date.now(); // 刚喝过水，重置提醒计时
   saveState(); renderAll();
   const target = state.profile.waterTargetMl;
   const ml = state.water[t].length * 250;
@@ -308,6 +327,7 @@ function renderSit() {
 function logSit() {
   const t = todayStr();
   state.sit[t] = (state.sit[t] || 0) + 1;
+  state.settings.lastSit = Date.now(); // 刚活动过，重置提醒计时
   saveState(); renderSit(); renderQuickStats();
   showToast("🧘", "干得漂亮", "起身活动能让身体更轻松。");
 }

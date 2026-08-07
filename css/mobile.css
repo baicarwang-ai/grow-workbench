@@ -4,6 +4,27 @@
  * 将布局调整为 App 风格——左侧导航变为底部标签栏，卡片单列，模态全屏。
  * ========================================================================= */
 
+/* ---- Toast 升级：关闭按钮 + 操作按钮（桌面/手机通用） ---- */
+.t-body { flex: 1; min-width: 0; }
+.t-close {
+  border: none; background: var(--card); border-radius: 50%;
+  box-shadow: var(--shadow-d), var(--shadow-l);
+  color: var(--muted); cursor: pointer; font-size: 12px;
+  width: 28px; height: 28px; flex-shrink: 0; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  transition: box-shadow .15s ease;
+}
+.t-close:active { box-shadow: var(--shadow-inset); }
+.t-btn {
+  margin-top: 10px; width: 100%;
+  border: none; background: linear-gradient(135deg, var(--blue), #7aa8f0);
+  color: #fff; border-radius: 12px; padding: 11px 14px;
+  font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  box-shadow: 4px 4px 10px rgba(92,143,232,.35);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.t-btn:active { transform: translateY(1px); box-shadow: var(--shadow-inset); }
+
 @media (max-width: 768px) {
 
   /* ---- 全局 ---- */
