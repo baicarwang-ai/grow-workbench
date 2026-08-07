@@ -4,9 +4,6 @@
  * 将布局调整为 App 风格——左侧导航变为底部标签栏，卡片单列，模态全屏。
  * ========================================================================= */
 
-/* 折叠按钮：桌面端隐藏，仅手机端（下方媒体查询）显示 */
-.banner-toggle { display: none; }
-
 @media (max-width: 768px) {
 
   /* ---- 全局 ---- */
@@ -46,27 +43,13 @@
   .quick-stat { flex-shrink: 0; min-width: 84px; padding: 9px 14px; border-radius: 16px; }
   .quick-stat b { font-size: 17px; }
 
-  /* ---- 科学依据横幅 ---- */
-  .science-banner { padding: 12px 14px; }
-  .banner-head { align-items: center; flex-direction: row; gap: 8px; }
-  .banner-head .link-btn { margin-left: auto; font-size: 12px; white-space: nowrap; }
-
-  /* 折叠按钮：仅手机显示 */
-  .banner-toggle {
-    border: none; background: var(--card); border-radius: 999px;
-    box-shadow: var(--shadow-d), var(--shadow-l);
-    color: var(--text); cursor: pointer; font-family: inherit;
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 6px 12px; font-size: 12px; font-weight: 700;
-    flex-shrink: 0; transition: box-shadow .15s ease;
-  }
-  .banner-toggle:active { box-shadow: var(--shadow-inset); }
-  .banner-toggle .bt-arrow { transition: transform .25s ease; display: inline-block; }
-
-  /* 默认折叠：只显示标题行 */
-  .banner-items { display: none; margin-top: 10px; }
-  .science-banner.open .banner-items { display: grid; animation: fadein .25s ease; }
-  .science-banner.open .banner-toggle .bt-arrow { transform: rotate(180deg); }
+  /* ---- 科学依据横幅：移到页面最底部 ---- */
+  /* 通过 flex order 重排：header(0) → layout(0) → footer(2) → science-banner(3) */
+  .app { display: flex; flex-direction: column; }
+  .science-banner { order: 3; padding: 14px; margin-bottom: 0; }
+  footer { order: 2; }
+  .banner-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .banner-items { grid-template-columns: 1fr; gap: 8px; }
 
   /* ---- 布局：桌面侧边栏 → 底部标签栏 ---- */
   .layout { display: block; gap: 0; }
