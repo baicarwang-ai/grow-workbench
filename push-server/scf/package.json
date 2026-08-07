@@ -1,0 +1,10 @@
+{
+  "name": "grow-push-scf",
+  "version": "1.0.0",
+  "description": "个人成长工作台 · 云端推送（腾讯云 SCF）",
+  "main": "index.js",
+  "dependencies": {
+    "web-push": "^3.6.7",
+    "cos-nodejs-sdk-v5": "^2.14.8"
+  }
+}
