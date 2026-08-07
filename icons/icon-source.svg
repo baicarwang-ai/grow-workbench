@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6aa8ef"/>
+      <stop offset="1" stop-color="#5fae84"/>
+    </linearGradient>
+    <linearGradient id="sprout" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e8f4ef"/>
+    </linearGradient>
+  </defs>
+  <!-- 圆角底：与工作台一致的蓝绿渐变 -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bg)"/>
+  <!-- 新拟态高光 -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="10"/>
+  <ellipse cx="150" cy="130" rx="120" ry="70" fill="#ffffff" fill-opacity="0.18"/>
+  <!-- 发芽：茎 -->
+  <path d="M256 372 C256 372 250 268 254 224" stroke="url(#sprout)" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <!-- 左叶 -->
+  <path d="M254 240 C200 232 176 192 184 158 C220 152 256 186 254 240 Z" fill="url(#sprout)"/>
+  <!-- 右叶 -->
+  <path d="M258 216 C306 196 336 152 328 120 C292 120 262 158 258 216 Z" fill="url(#sprout)"/>
+  <!-- 土 -->
+  <ellipse cx="256" cy="392" rx="96" ry="26" fill="#ffffff" fill-opacity="0.28"/>
+</svg>

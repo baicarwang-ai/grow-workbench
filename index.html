@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>个人成长工作台</title>
+  <meta name="description" content="作息 · 饮食 · 健身 · 阅读，一体化个人成长工作台（手机版）" />
+  <meta name="theme-color" content="#e8ecf2" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="成长工作台" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/mobile.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ============ 顶部 ============ -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">🌱</div>
+        <div>
+          <h1>个人成长工作台</h1>
+          <p class="brand-sub" id="today-line">今日 · 慢就是快，习惯胜于冲刺</p>
+        </div>
+      </div>
+      <div class="quick-stats" id="quick-stats"></div>
+    </header>
+
+    <!-- ============ 科学依据横幅 ============ -->
+    <div class="science-banner neu-card" id="science-banner">
+      <div class="banner-head">
+        <span class="pill pill-green">科学依据 · 数据来源</span>
+        <button class="link-btn" data-open="science-modal">查看完整依据与来源 →</button>
+      </div>
+      <div class="banner-items" id="science-banner-items"></div>
+    </div>
+
+    <!-- ============ 四栏主体 ============ -->
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-title">栏目</div>
+        <nav class="side-nav">
+          <button class="side-btn active" data-view="health">
+            <span class="sb-emoji">🌙</span>
+            <span class="sb-text"><b>作息与健康</b><small>睡眠 · 饮水 · 久坐</small></span>
+          </button>
+          <button class="side-btn" data-view="diet">
+            <span class="sb-emoji">🥗</span>
+            <span class="sb-text"><b>饮食</b><small>菜谱 · 三餐 · 营养</small></span>
+          </button>
+          <button class="side-btn" data-view="fitness">
+            <span class="sb-emoji">💪</span>
+            <span class="sb-text"><b>健身</b><small>计划 · 记录 · 教程</small></span>
+          </button>
+          <button class="side-btn" data-view="reading">
+            <span class="sb-emoji">📚</span>
+            <span class="sb-text"><b>阅读</b><small>打卡 · 书库 · 心得</small></span>
+          </button>
+        </nav>
+        <div class="sidebar-foot muted">数据保存在本地浏览器</div>
+      </aside>
+      <main class="views">
+
+      <!-- 第一栏：作息与健康 -->
+      <section class="view column col-health active" id="view-health">
+        <div class="col-head">
+          <span class="col-emoji">🌙</span>
+          <div><h2>作息与健康</h2><p>睡眠 · 饮水 · 久坐</p></div>
+        </div>
+        <div class="tabs" data-tabs="health">
+          <button class="tab active" data-tab="sleep">睡眠日历</button>
+          <button class="tab" data-tab="water">饮水</button>
+          <button class="tab" data-tab="sit">久坐</button>
+        </div>
+
+        <!-- 睡眠 -->
+        <div class="tab-panel active" data-panel="sleep">
+          <div class="neu-card mini-stat-row">
+            <div class="mini-stat"><span id="sleep-last"></span><label>最近睡眠</label></div>
+            <div class="mini-stat"><span id="sleep-avg"></span><label>本周均值</label></div>
+            <div class="mini-stat"><span id="sleep-goal"></span><label>目标</label></div>
+          </div>
+          <div class="neu-card">
+            <div class="card-title">睡眠日历</div>
+            <div class="cal-nav">
+              <button class="round-btn" id="sleep-prev">‹</button>
+              <span id="sleep-cal-title"></span>
+              <button class="round-btn" id="sleep-next">›</button>
+            </div>
+            <div class="calendar-grid" id="sleep-cal"></div>
+          </div>
+          <button class="neu-btn primary full" id="btn-add-sleep">＋ 记录昨晚睡眠</button>
+          <div class="hint">规律作息比时长更重要：每天固定时间入睡与起床（推荐 23:00 前入睡，睡满 7–9 小时）。</div>
+        </div>
+
+        <!-- 饮水 -->
+        <div class="tab-panel" data-panel="water">
+          <div class="neu-card water-card">
+            <div class="water-ring" id="water-ring">
+              <div class="water-ring-inner">
+                <span id="water-num">0</span><small>ml</small>
+                <em id="water-percent">0%</em>
+              </div>
+            </div>
+            <div class="water-meta">
+              <div class="mini-stat"><span id="water-target">2500</span><label>目标 ml</label></div>
+              <div class="mini-stat"><span id="water-cups">0</span><label>杯数 (≈250ml)</label></div>
+            </div>
+          </div>
+          <div class="water-actions">
+            <button class="neu-btn" id="water-add">＋ 喝一杯 (250ml)</button>
+            <button class="neu-btn" id="water-undo">－ 撤销</button>
+          </div>
+          <div class="water-timeline" id="water-timeline"></div>
+          <div class="neu-card">
+            <div class="card-title">饮水提醒</div>
+            <label class="switch-row"><span>开启自动饮水提醒</span><input type="checkbox" id="water-reminder" /><i></i></label>
+            <div class="reminder-opts">
+              <label>间隔 <input type="number" id="water-interval" min="15" max="180" value="60" /> 分钟</label>
+              <label>时段 <input type="time" id="water-start" value="08:00" /> – <input type="time" id="water-end" value="21:30" /></label>
+            </div>
+            <div class="hint">科学依据：中国居民膳食指南推荐成人每日饮水约 1500–1700ml（体力活动/减脂期建议更高），WHO 建议成人每日约 2000–2500ml。你设定的 2500ml 适合训练日。少量多次，避免一次猛灌。</div>
+          </div>
+        </div>
+
+        <!-- 久坐 -->
+        <div class="tab-panel" data-panel="sit">
+          <div class="neu-card sit-card">
+            <div class="sit-icon">🧘</div>
+            <div class="card-title">久坐提醒</div>
+            <p>每坐 <b id="sit-interval-label">50</b> 分钟，起身活动 2–3 分钟：拉伸、走动、靠墙静蹲，保护腰椎与代谢。</p>
+            <div class="reminder-opts">
+              <label>间隔 <input type="number" id="sit-interval" min="20" max="120" value="50" /> 分钟</label>
+            </div>
+            <label class="switch-row"><span>开启久坐提醒</span><input type="checkbox" id="sit-reminder" /><i></i></label>
+          </div>
+          <div class="neu-card">
+            <div class="card-title">今日已起身</div>
+            <div class="big-num" id="sit-count">0</div>
+            <button class="neu-btn" id="sit-log">✓ 我起身活动了</button>
+          </div>
+          <div class="hint">科学依据：久坐打断（每 30–60 分钟站立/走动）可改善血糖与血液循环，降低久坐带来的健康风险。ACSM 建议每周至少 150 分钟中等强度活动。</div>
+        </div>
+      </section>
+
+      <!-- 第二栏：饮食 -->
+      <section class="view column col-diet" id="view-diet">
+        <div class="col-head">
+          <span class="col-emoji">🥗</span>
+          <div><h2>饮食</h2><p>菜谱 · 营养 · 三餐记录</p></div>
+        </div>
+        <div class="tabs" data-tabs="diet">
+          <button class="tab active" data-tab="week">本周菜谱</button>
+          <button class="tab" data-tab="library">菜谱库</button>
+          <button class="tab" data-tab="diary">饮食日历</button>
+          <button class="tab" data-tab="smart">智能菜谱</button>
+        </div>
+
+        <!-- 本周菜谱 -->
+        <div class="tab-panel active" data-panel="week">
+          <div class="neu-card">
+            <div class="card-title" id="week-title">本周菜谱（自动轮换）</div>
+            <div class="week-menu" id="week-menu"></div>
+          </div>
+          <div class="hint">菜谱每周自动更新轮换；每天的三餐会出现在「饮食日历」中，拍照打卡后自动关联。</div>
+        </div>
+
+        <!-- 菜谱库 -->
+        <div class="tab-panel" data-panel="library">
+          <div class="neu-card">
+            <div class="search-box">
+              <input type="search" id="recipe-search" placeholder="搜索菜谱 / 食材 / 标签，如：鸡胸、高蛋白、15分钟…" />
+            </div>
+            <div class="filter-chips" id="recipe-chips"></div>
+          </div>
+          <div class="recipe-grid" id="recipe-grid"></div>
+        </div>
+
+        <!-- 饮食日历 -->
+        <div class="tab-panel" data-panel="diary">
+          <div class="neu-card">
+            <div class="cal-nav">
+              <button class="round-btn" id="diet-prev">‹</button>
+              <span id="diet-cal-title"></span>
+              <button class="round-btn" id="diet-next">›</button>
+            </div>
+            <div class="calendar-grid" id="diet-cal"></div>
+          </div>
+          <div class="neu-card" id="meal-day-card">
+            <div class="card-title" id="meal-day-title">今日三餐</div>
+            <div id="meal-day-body"></div>
+          </div>
+        </div>
+
+        <!-- 智能菜谱 -->
+        <div class="tab-panel" data-panel="smart">
+          <div class="neu-card">
+            <div class="card-title">🍳 用现有食材生成菜谱</div>
+            <p class="muted">输入你手头的食材（用空格或逗号分隔），我来匹配菜谱库并给出可做组合。</p>
+            <textarea id="smart-input" rows="3" placeholder="例如：鸡胸肉 西兰花 鸡蛋 糙米 西红柿"></textarea>
+            <button class="neu-btn primary" id="btn-smart-gen">生成菜谱</button>
+          </div>
+          <div class="smart-ai-card neu-card">
+            <div class="card-title">📷 拍照 / 语音告诉我食材</div>
+            <p class="muted">把食材照片或清单发到 Codex 对话里，我会帮你分析并「写入」菜谱库。也可以点下面按钮复制一段标准请求，粘贴到对话里即可。</p>
+            <button class="neu-btn" id="btn-copy-request">复制请求模板</button>
+          </div>
+          <div id="smart-results"></div>
+        </div>
+      </section>
+
+      <!-- 第三栏：健身 -->
+      <section class="view column col-fitness" id="view-fitness">
+        <div class="col-head">
+          <span class="col-emoji">💪</span>
+          <div><h2>健身</h2><p>计划 · 记录 · 教程库</p></div>
+        </div>
+        <div class="tabs" data-tabs="fitness">
+          <button class="tab active" data-tab="plan">本周计划</button>
+          <button class="tab" data-tab="log">训练记录</button>
+          <button class="tab" data-tab="library">教程库</button>
+          <button class="tab" data-tab="tan">谭成义库</button>
+        </div>
+
+        <!-- 本周计划 -->
+        <div class="tab-panel active" data-panel="plan">
+          <div class="neu-card">
+            <div class="card-title">每周 5 练 · 新手肩背优先</div>
+            <div class="plan-grid" id="plan-grid"></div>
+            <div class="hint">重心：肩 + 背（每周各 2 次），其余部位均衡安排；每次 60–90 分钟。训练动作可从教程库查看解析与视频。</div>
+          </div>
+          <div class="neu-card">
+            <div class="card-title">进度指标</div>
+            <div class="mini-stat-row">
+              <div class="mini-stat"><span id="stat-weight"></span><label>当前体重</label></div>
+              <div class="mini-stat"><span id="stat-target"></span><label>目标</label></div>
+              <div class="mini-stat"><span id="stat-weekly"></span><label>本周训练</label></div>
+              <div class="mini-stat"><span id="stat-streak"></span><label>连续周数</label></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 训练记录 -->
+        <div class="tab-panel" data-panel="log">
+          <button class="neu-btn primary full" id="btn-add-workout">＋ 记录一次训练</button>
+          <div class="hint">运动手表记录可以直接发到 Codex 对话里，我帮你解析并归档；也可以在这里手动填写。</div>
+          <div class="workout-list" id="workout-list"></div>
+        </div>
+
+        <!-- 教程库 -->
+        <div class="tab-panel" data-panel="library">
+          <div class="neu-card">
+            <div class="search-box"><input type="search" id="ex-search" placeholder="搜索动作：推举 / 划船 / 深蹲…" /></div>
+            <div class="filter-chips" id="ex-chips"></div>
+          </div>
+          <div class="ex-grid" id="ex-grid"></div>
+        </div>
+
+        <!-- 谭成义库 -->
+        <div class="tab-panel" data-panel="tan">
+          <div class="neu-card tan-hero">
+            <div class="tan-logo">谭</div>
+            <div>
+              <div class="card-title">谭成义 · 健身教程库</div>
+              <p class="muted">B 站知名健身教学博主，以「保姆级私教视角」讲解动作细节与发力要点，非常适合新手。点击视频卡片可直接跳转 B 站观看演示。</p>
+            </div>
+          </div>
+          <div class="tan-grid" id="tan-grid"></div>
+        </div>
+      </section>
+
+      <!-- 第四栏：读书 -->
+      <section class="view column col-reading" id="view-reading">
+        <div class="col-head">
+          <span class="col-emoji">📚</span>
+          <div><h2>阅读</h2><p>打卡 · 日历 · 读书库</p></div>
+        </div>
+        <div class="tabs" data-tabs="reading">
+          <button class="tab active" data-tab="checkin">读书打卡</button>
+          <button class="tab" data-tab="cal">读书日历</button>
+          <button class="tab" data-tab="library">读书库</button>
+        </div>
+
+        <!-- 打卡 -->
+        <div class="tab-panel active" data-panel="checkin">
+          <div class="neu-card mini-stat-row">
+            <div class="mini-stat"><span id="read-today"></span><label>今日</label></div>
+            <div class="mini-stat"><span id="read-week"></span><label>本周分钟</label></div>
+            <div class="mini-stat"><span id="read-streak"></span><label>连续天数</label></div>
+          </div>
+          <button class="neu-btn primary full" id="btn-add-reading">＋ 记录今日阅读</button>
+          <div class="reading-list" id="reading-list"></div>
+        </div>
+
+        <!-- 日历 -->
+        <div class="tab-panel" data-panel="cal">
+          <div class="neu-card">
+            <div class="cal-nav">
+              <button class="round-btn" id="read-prev">‹</button>
+              <span id="read-cal-title"></span>
+              <button class="round-btn" id="read-next">›</button>
+            </div>
+            <div class="calendar-grid" id="read-cal"></div>
+          </div>
+        </div>
+
+        <!-- 读书库 -->
+        <div class="tab-panel" data-panel="library">
+          <div class="neu-card">
+            <div class="search-box"><input type="search" id="book-search" placeholder="搜索书名 / 作者 / 分类…" /></div>
+          </div>
+          <div class="book-grid" id="book-grid"></div>
+        </div>
+      </section>
+      </main>
+    </div>
+
+    <!-- ============ 页脚 ============ -->
+    <footer>
+      <div class="footer-inner neu-card">
+        <div>
+          <b>数据来源与更新</b>
+          <p class="muted">科学依据：中国居民膳食指南（2022）、美国运动医学会 ACSM 指南、WHO 饮水建议、蛋白质与减脂研究（1.6g/kg）、睡眠与减脂研究等。菜谱/教程/书库会定期更新，本周菜谱每周自动轮换。</p>
+        </div>
+        <div class="footer-actions">
+          <button class="neu-btn" id="btn-export">导出数据</button>
+          <button class="neu-btn" id="btn-import">导入数据</button>
+          <button class="neu-btn" data-open="science-modal">数据来源</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============ 模态框容器 ============ -->
+  <div class="modal-mask" id="modal-mask"></div>
+  <div class="modal" id="modal">
+    <div class="modal-head"><h3 id="modal-title"></h3><button class="round-btn" id="modal-close">✕</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+
+  <!-- 提醒横幅 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 安装到主屏幕引导 -->
+  <div class="install-banner" id="install-banner" hidden>
+    <div class="ib-icon">📱</div>
+    <div class="ib-text">
+      <b>安装到手机主屏幕</b>
+      <span id="ib-hint">像 App 一样全屏使用、快速打开</span>
+    </div>
+    <button class="ib-btn" id="ib-install-btn" hidden>安装</button>
+    <button class="ib-close" id="ib-close" aria-label="关闭">✕</button>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    /* ---------------- 手机版：PWA 注册 & 安装引导 ---------------- */
+    (function () {
+      var isStandalone = window.matchMedia("(display-mode: standalone)").matches
+        || window.navigator.standalone === true;
+      var deferredPrompt = null;
+
+      // 注册 Service Worker（仅 HTTPS / localhost 环境生效）
+      if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("sw.js").catch(function () { /* 静默失败 */ });
+        });
+      }
+
+      var banner = document.getElementById("install-banner");
+      var closeBtn = document.getElementById("ib-close");
+      var installBtn = document.getElementById("ib-install-btn");
+      var hint = document.getElementById("ib-hint");
+
+      function maybeShow() {
+        if (!banner || isStandalone) return;
+        try { if (localStorage.getItem("install_banner_closed")) return; } catch (e) {}
+        banner.hidden = false;
+        // 未安装模式下，提示可点击安装按钮（Android Chrome 有 beforeinstallprompt，iOS 引导分享）
+        var iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        if (iOS) {
+          installBtn.hidden = true;
+          hint.textContent = "点 Safari 的「分享」→「添加到主屏幕」";
+        }
+      }
+
+      closeBtn.onclick = function () {
+        banner.hidden = true;
+        try { localStorage.setItem("install_banner_closed", "1"); } catch (e) {}
+      };
+
+      window.addEventListener("beforeinstallprompt", function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!banner || banner.hidden) return;
+        installBtn.hidden = false;
+        hint.textContent = "添加到主屏幕，全屏使用、离线可用";
+        installBtn.onclick = function () {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function () { banner.hidden = true; });
+        };
+      });
+
+      window.addEventListener("appinstalled", function () { banner.hidden = true; });
+
+      if (document.readyState === "complete" || document.readyState === "interactive") maybeShow();
+      else document.addEventListener("DOMContentLoaded", maybeShow);
+    })();
+  </script>
+</body>
+</html>
