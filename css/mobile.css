@@ -5,8 +5,8 @@
  * ========================================================================= */
 
 /* ---- Toast 升级：关闭按钮 + 操作按钮 + 自动关闭动画（桌面/手机通用） ---- */
-/* touch-action: manipulation → iOS 上点击立即响应、滚动手势不会吞掉 click */
-.toast { position: relative; overflow: hidden; touch-action: manipulation; }
+/* 必须是 position:fixed（fixed 元素同样可作为 .t-progress 绝对定位的包含块） */
+.toast { position: fixed; overflow: hidden; touch-action: manipulation; }
 .t-body { flex: 1; min-width: 0; }
 .t-close {
   border: none; background: var(--card); border-radius: 50%;
@@ -210,8 +210,21 @@
   .footer-actions { flex-wrap: nowrap; }
   .footer-actions .neu-btn { flex: 1; padding: 12px 6px; font-size: 13px; }
 
-  /* ---- Toast：避开底部标签栏 ---- */
-  .toast { bottom: calc(92px + env(safe-area-inset-bottom)); }
+  /* ---- Toast：屏幕中上部居中（醒目，不被底部标签栏遮挡） ---- */
+  .toast {
+    top: 26%; bottom: auto;
+    transform: translateX(-50%) translateY(-16px);
+    opacity: 0;
+    transition: transform .3s ease, opacity .3s ease;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    animation: toast-auto-hide-m .35s ease var(--toast-ms, 6000ms) forwards;
+  }
+  @keyframes toast-auto-hide-m {
+    to { transform: translateX(-50%) translateY(-16px); opacity: 0; }
+  }
 
   /* ---- 安装引导横幅 ---- */
   .install-banner {
