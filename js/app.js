@@ -568,6 +568,19 @@ function openMealModal(ds, slot) {
     }
   };
   let photoData = rec.photo || null;
+  // 食物信息输入完（失焦）自动估算热量并填入，无需手动算
+  const infoEl = $("#meal-info");
+  infoEl.addEventListener("blur", () => {
+    const txt = infoEl.value.trim();
+    if (!txt) return;
+    const res = estimateCalories(txt);
+    if (res.items.length) {
+      calInput.value = res.total;
+      showToast("🔥", "已估算热量", `约 ${res.total} kcal${res.unknown.length ? "，部分食物未收录已忽略" : ""}。可手动修正数值。`);
+    } else if (res.unknown.length) {
+      showToast("🍳", "无法估算", "这些食物不在热量库里，可直接发我对话里帮你估算。");
+    }
+  });
   $("#meal-photo-input").onchange = (e) => {
     const f = e.target.files[0];
     if (!f) return;
@@ -713,9 +726,22 @@ function smartGenerate() {
     return { r, hit, total: r.ingredients.length, matched, score: hit / r.ingredients.length };
   }).filter(x => x.hit >= 1).sort((a, b) => b.score - a.score || b.hit - a.hit);
 
-  let html = "";
+  // 附加热量估算：无论输入食材是否匹配到菜谱，都给出这批食材的热量估算
+  let calHtml = "";
+  {
+    const cal = estimateCalories(raw);
+    if (cal.items.length) {
+      calHtml = `<div class="smart-result" style="background:linear-gradient(135deg,var(--blue-soft),#cfe0fb)">
+        <h4>🔥 这批食材热量估算 <span class="match">约 ${cal.total} kcal</span></h4>
+        <div class="muted">${cal.items.map(i => `${esc(i.name)} ${i.grams}g → ${i.kcal}kcal`).join(" · ")}</div>
+        ${cal.unknown.length ? `<div class="missing">未收录：${cal.unknown.map(esc).join("、")}（可发我对话里帮你补）</div>` : ""}
+        <div class="hint">💡 全部食材可在「热量估算器」里算；这一餐做好后，在饮食日历记录时输入食物名会自动带出热量。</div>
+      </div>`;
+    }
+  }
+  let html = calHtml;
   if (!scored.length) {
-    html = `<div class="empty">没有匹配到现有菜谱。试试「鸡胸、鸡蛋、糙米、番茄」等常见食材，或者直接把食材拍照发我，我帮你现场设计。</div>`;
+    html += `<div class="empty">没有匹配到现有菜谱。试试「鸡胸、鸡蛋、糙米、番茄」等常见食材，或者直接把食材拍照发我，我帮你现场设计。</div>`;
   } else {
     const top = scored.slice(0, 5);
     html = `<h4 style="margin:14px 0 8px">为你匹配到 ${scored.length} 个可做菜谱：</h4>` + top.map(x => {
