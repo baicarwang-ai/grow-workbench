@@ -2,7 +2,7 @@
  * 个人成长工作台 · Service Worker（离线缓存）
  * 首次访问后缓存全部静态资源，之后离线也能打开。
  * ========================================================================= */
-const CACHE_NAME = "grow-workbench-v1";
+const CACHE_NAME = "grow-workbench-v2";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -58,5 +58,31 @@ self.addEventListener("fetch", (event) => {
         return res;
       })
       .catch(() => caches.match(req).then((hit) => hit || caches.match("./index.html")))
+  );
+});
+
+/* ================= 云端推送（Web Push） ================= */
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) {}
+  const options = {
+    body: data.body || "",
+    icon: "./icons/icon-192.png",
+    badge: "./icons/icon-192.png",
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.tag || "grow-remind",
+    renotify: true,
+    requireInteraction: false,
+  };
+  event.waitUntil(self.registration.showNotification(data.title || "提醒", options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      if (list.length > 0) { list[0].focus(); return; }
+      return clients.openWindow("./index.html");
+    })
   );
 });

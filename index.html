@@ -123,6 +123,19 @@
               <label>时段 <input type="time" id="water-start" value="08:00" /> – <input type="time" id="water-end" value="21:30" /></label>
             </div>
             <div class="watch-tip">⌚ 开启系统通知后，提醒会推送到手机通知栏，Apple Watch / 智能手环会同步震动提醒（首次开启时会弹出授权，请点「允许」）。</div>
+            <div class="cloud-push" id="cloud-push">
+              <div class="cp-row">
+                <div>
+                  <div class="cp-title">☁️ 云端推送</div>
+                  <div class="cp-status" id="push-status">检测中…</div>
+                </div>
+                <div class="cp-btns">
+                  <button class="neu-btn primary" id="btn-push-enable">启用云端推送</button>
+                  <button class="neu-btn" id="btn-push-disable" style="display:none">停用</button>
+                </div>
+              </div>
+              <div class="cp-sub">手机锁屏 / 页面不打开也能准时收到饮水与久坐提醒（手表同步震动）。需要先部署免费的云端服务，详见部署说明。</div>
+            </div>
             <div class="hint">科学依据：中国居民膳食指南推荐成人每日饮水约 1500–1700ml（体力活动/减脂期建议更高），WHO 建议成人每日约 2000–2500ml。你设定的 2500ml 适合训练日。少量多次，避免一次猛灌。</div>
           </div>
         </div>
