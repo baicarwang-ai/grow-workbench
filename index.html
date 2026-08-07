@@ -182,6 +182,11 @@
         <!-- 饮食日历 -->
         <div class="tab-panel" data-panel="diary">
           <div class="neu-card">
+            <div class="card-title">🔥 每日热量摄入（近 7 天）</div>
+            <div id="calorie-chart"></div>
+            <div class="hint">按三餐记录自动统计：选菜谱按菜谱热量，自定义餐填「热量 kcal」或先用「智能菜谱 → 热量估算器」算出再填。橙色柱 = 超目标。</div>
+          </div>
+          <div class="neu-card">
             <div class="cal-nav">
               <button class="round-btn" id="diet-prev">‹</button>
               <span id="diet-cal-title"></span>
@@ -207,6 +212,13 @@
             <div class="card-title">📷 拍照 / 语音告诉我食材</div>
             <p class="muted">把食材照片或清单发到 Codex 对话里，我会帮你分析并「写入」菜谱库。也可以点下面按钮复制一段标准请求，粘贴到对话里即可。</p>
             <button class="neu-btn" id="btn-copy-request">复制请求模板</button>
+          </div>
+          <div class="neu-card">
+            <div class="card-title">🔥 热量估算器</div>
+            <p class="muted">输入你这一餐吃的食物和重量，自动估算总热量（内置常见食物热量库）。例如：<b>米饭200g 鸡胸肉150g 西兰花100g 鸡蛋2个</b>。未写重量默认按 100g 估。</p>
+            <textarea id="cal-input" rows="2" placeholder="例如：米饭200g 鸡胸肉150g 西兰花100g 鸡蛋2个"></textarea>
+            <button class="neu-btn primary" id="btn-estimate-cal">🔥 估算热量</button>
+            <div id="cal-results"></div>
           </div>
           <div id="smart-results"></div>
         </div>

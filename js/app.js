@@ -60,6 +60,7 @@ function defaultState() {
       waterReminder: false, waterInterval: 60, waterStart: "08:00", waterEnd: "21:30",
       sitReminder: false, sitInterval: 50,
       lastWater: 0, lastSit: 0,
+      calorieGoal: 2000,
     },
     weeklyMenu: null,
   };
@@ -497,7 +498,7 @@ function renderMealDay() {
     if (rec && (rec.recipeId || rec.name || rec.photo || rec.foodInfo)) {
       const r = rec.recipeId ? recipeById(rec.recipeId) : null;
       const name = r ? r.name : rec.name || "自定义";
-      const kcal = r ? r.nutrition.kcal + " kcal" : (rec.foodInfo ? "待估算" : "");
+      const kcal = r ? r.nutrition.kcal + " kcal" : (rec.calories ? rec.calories + " kcal" : (rec.foodInfo ? "待估算" : ""));
       html += `<div class="meal-slot">
         <span class="meal-tag ${cls}">${label}</span>
         <div class="slot-body">
@@ -542,6 +543,9 @@ function openMealModal(ds, slot) {
     <div class="field"><label>食物信息 / 营养备注（可填你告诉我的热量蛋白质等）</label>
       <textarea id="meal-info" rows="2" placeholder="例如：鸡胸150g+糙米200g，约520kcal，蛋白45g">${esc(rec.foodInfo || "")}</textarea>
     </div>
+    <div class="field"><label>热量 kcal（选菜谱自动带出；自定义餐可手填或用「智能菜谱→热量估算器」）</label>
+      <input id="meal-cal" type="number" min="0" step="1" placeholder="如 520" value="${rec.calories || ""}">
+    </div>
     <div class="field"><label>餐前照片（先拍照发我分析，也可以在这里上传存档）</label>
       <input type="file" id="meal-photo-input" accept="image/*" style="box-shadow:none;padding:0">
       <div id="meal-photo-preview">${rec.photo ? `<img src="${rec.photo}" style="max-width:160px;border-radius:14px;margin-top:8px;box-shadow:3px 3px 10px rgba(0,0,0,.15)">` : ""}</div>
@@ -554,7 +558,15 @@ function openMealModal(ds, slot) {
     <p class="muted">💡 正确姿势：吃饭前先拍照发到 Codex 对话里，我会帮你分析营养并给建议；这张照片也可上传到这里存档。</p>`);
   const recipeSel = $("#meal-recipe");
   const customWrap = $("#meal-custom-wrap");
-  recipeSel.onchange = () => { customWrap.style.display = recipeSel.value === "__custom" ? "block" : "none"; };
+  const calInput = $("#meal-cal");
+  recipeSel.onchange = () => {
+    customWrap.style.display = recipeSel.value === "__custom" ? "block" : "none";
+    // 选中菜谱时自动带出该菜谱热量
+    if (recipeSel.value && recipeSel.value !== "__custom") {
+      const r = recipeById(recipeSel.value);
+      if (r && r.nutrition) calInput.value = r.nutrition.kcal;
+    }
+  };
   let photoData = rec.photo || null;
   $("#meal-photo-input").onchange = (e) => {
     const f = e.target.files[0];
@@ -579,10 +591,12 @@ function openMealModal(ds, slot) {
   $("#meal-save").onclick = () => {
     if (!state.meals[ds]) state.meals[ds] = {};
     const recipeId = recipeSel.value !== "__custom" ? recipeSel.value : "";
+    const r = recipeId ? recipeById(recipeId) : null;
     state.meals[ds][slot] = {
       recipeId,
       name: recipeSel.value === "__custom" ? $("#meal-custom").value.trim() : "",
       foodInfo: $("#meal-info").value.trim(),
+      calories: r && r.nutrition ? r.nutrition.kcal : (parseInt(calInput.value, 10) || 0),
       photo: photoData,
       note: $("#meal-note").value.trim(),
     };
@@ -593,6 +607,94 @@ function openMealModal(ds, slot) {
     if (state.meals[ds]) delete state.meals[ds][slot];
     saveState(); closeModal(); renderAll();
   };
+}
+
+/* ---- 热量估算（基于常见食物热量库） ---- */
+function estimateCalories(text) {
+  const items = [];
+  const unknown = [];
+  const parts = String(text || "").split(/[,，、;；+＋\n\s]+/).filter(Boolean);
+  for (const part of parts) {
+    const m = part.match(/(\d+(?:\.\d+)?)\s*(g|克|kg|公斤|毫升|ml)/i);
+    let grams = 100, namePart = part.trim();
+    if (m) {
+      const q = parseFloat(m[1]);
+      const unit = m[2].toLowerCase();
+      grams = (unit === "kg" || unit === "公斤") ? q * 1000 : q;
+      namePart = part.slice(0, m.index).trim();
+    }
+    if (!namePart) continue;
+    const f = FOOD_CALORIES.find(x =>
+      namePart.includes(x[0]) || x[0].includes(namePart) ||
+      (x[2] || []).some(a => namePart.includes(a)));
+    if (f) items.push({ name: namePart, grams: Math.round(grams), kcal: Math.round(grams / 100 * f[1]), per100: f[1] });
+    else unknown.push(namePart + (m ? ` ${m[1]}${m[2]}` : ""));
+  }
+  return { items, total: items.reduce((a, b) => a + b.kcal, 0), unknown };
+}
+function renderCalEstimate(text) {
+  const box = $("#cal-results");
+  if (!box) return;
+  if (!text) { box.innerHTML = ""; return; }
+  const res = estimateCalories(text);
+  const rows = res.items.map(it =>
+    `<div class="cal-item"><span>${esc(it.name)}</span><span class="muted">${it.grams}g</span><b>${it.kcal} kcal</b></div>`).join("");
+  const unknownHtml = res.unknown.length
+    ? `<div class="cal-unknown">未收录：${res.unknown.map(esc).join("、")}（可留言让我补充）</div>` : "";
+  box.innerHTML = `<div class="cal-total">🔥 估算总热量 <b>${res.total}</b> kcal <small>${res.items.length ? "（目标 " + state.settings.calorieGoal + " kcal）" : ""}</small></div>
+    ${rows}${unknownHtml}`;
+}
+
+/* ---- 每日热量摄入图表（近 7 天） ---- */
+function dayCalories(iso) {
+  const m = state.meals[iso] || {};
+  let total = 0;
+  for (const slot of ["breakfast", "lunch", "dinner", "snack"]) {
+    const rec = m[slot];
+    if (!rec) continue;
+    if (rec.recipeId) { const r = recipeById(rec.recipeId); if (r && r.nutrition) total += r.nutrition.kcal; }
+    else total += (rec.calories || 0);
+  }
+  return total;
+}
+function renderCalorieChart() {
+  const el = $("#calorie-chart");
+  if (!el) return;
+  const goal = state.settings.calorieGoal || 2000;
+  const today = todayStr();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const iso = toISO(addDays(fromISO(today), -i));
+    days.push({ iso, label: i === 0 ? "今天" : fmtWeekday(fromISO(iso)), total: dayCalories(iso), isToday: i === 0 });
+  }
+  const maxV = Math.max(goal * 1.15, ...days.map(d => d.total), 100);
+  const W = 340, H = 192, padT = 20, padB = 24, padL = 4, padR = 4;
+  const plotH = H - padT - padB;
+  const bw = (W - padL - padR) / 7;
+  const bars = days.map((d, i) => {
+    const h = Math.max(3, Math.round(d.total / maxV * plotH));
+    const x = padL + i * bw + bw * 0.16;
+    const y = padT + plotH - h;
+    const over = d.total > goal;
+    const fill = over ? "url(#gOver)" : (d.total > 0 ? "url(#gOk)" : "#d5dbe4");
+    const txt = d.total > 0 ? String(d.total) : "";
+    return `<rect x="${x}" y="${y}" width="${bw * 0.68}" height="${h}" rx="5" fill="${fill}"/>
+      <text x="${x + bw * 0.34}" y="${y - 5}" text-anchor="middle" font-size="10" font-weight="800" fill="${over ? "#b96f35" : (d.total > 0 ? "#3d7a5b" : "#aab2bf")}">${txt}</text>
+      <text x="${x + bw * 0.34}" y="${H - 7}" text-anchor="middle" font-size="10" font-weight="${d.isToday ? 800 : 600}" fill="${d.isToday ? "#3c6ec0" : "#7b8494"}">${d.label}</text>`;
+  });
+  const goalY = padT + plotH - Math.round(goal / maxV * plotH);
+  const sum = days.reduce((a, d) => a + d.total, 0);
+  const avg = Math.round(sum / 7);
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:460px;margin:0 auto">
+    <defs>
+      <linearGradient id="gOk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fc79b"/><stop offset="1" stop-color="#5fae84"/></linearGradient>
+      <linearGradient id="gOver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0b37c"/><stop offset="1" stop-color="#e79a5e"/></linearGradient>
+    </defs>
+    ${bars.join("")}
+    <line x1="${padL}" y1="${goalY}" x2="${W - padR}" y2="${goalY}" stroke="#e79a5e" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <text x="${W - padR}" y="${goalY - 5}" text-anchor="end" font-size="9.5" font-weight="700" fill="#b96f35">目标 ${goal}</text>
+  </svg>
+  <div class="cal-chart-sum">近 7 天日均 <b>${avg}</b> kcal · 今日 <b>${days[6].total}</b> kcal${days[6].total > goal ? "（已超目标）" : ""}</div>`;
 }
 
 /* ---- 智能菜谱 ---- */
@@ -1123,6 +1225,9 @@ function bindEvents() {
     const txt = "【食材分析】请帮我分析我发来的这张照片（或下面这串食材），估算每份的热量和三大营养素（蛋白质/碳水/脂肪），并给 2–3 个能用这些食材做成的低油、高蛋白菜谱方案（含步骤和营养）。谢谢！";
     navigator.clipboard.writeText(txt).then(() => showToast("📋", "已复制", "粘贴到 Codex 对话里发给我即可。"));
   };
+  // 热量估算器
+  $("#btn-estimate-cal").onclick = () => renderCalEstimate($("#cal-input").value);
+  $("#cal-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); renderCalEstimate($("#cal-input").value); } });
 
   // 健身
   $("#btn-add-workout").onclick = () => openWorkoutModal(null);
@@ -1177,6 +1282,7 @@ function renderAll() {
   renderRecipeGrid();
   renderDietCalendar();
   renderMealDay();
+  renderCalorieChart();
   renderPlan();
   renderWorkouts();
   renderExChips();

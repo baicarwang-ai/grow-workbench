@@ -44,6 +44,31 @@
 }
 @keyframes t-progress-shrink { from { width: 100%; } to { width: 0; } }
 
+/* ---- 热量估算器 & 热量图表（桌面/手机通用） ---- */
+#cal-results { margin-top: 12px; }
+.cal-total {
+  background: linear-gradient(135deg, var(--blue-soft), #cfe0fb);
+  border-radius: 14px; padding: 10px 14px; margin-bottom: 10px;
+  font-size: 14px; color: #3c6ec0; font-weight: 700;
+}
+.cal-total b { font-size: 20px; }
+.cal-total small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.cal-item {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, .4); border-radius: 12px; padding: 8px 12px; margin-bottom: 6px;
+  font-size: 13px;
+}
+.cal-item span:first-child { flex: 1; font-weight: 600; }
+.cal-item b { color: var(--green); font-size: 13px; }
+.cal-unknown {
+  margin-top: 8px; font-size: 12px; color: var(--orange);
+  background: var(--orange-soft); border-radius: 12px; padding: 8px 12px;
+}
+.cal-chart-sum {
+  text-align: center; margin-top: 10px; font-size: 13px; color: var(--muted);
+}
+.cal-chart-sum b { color: var(--text); font-size: 15px; }
+
 @media (max-width: 768px) {
 
   /* ---- 全局 ---- */
