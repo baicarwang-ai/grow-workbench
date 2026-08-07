@@ -4,8 +4,8 @@
  * ========================================================================= */
 
 /* ---------------- 云端推送配置 ---------------- */
-/* 部署 Cloudflare Worker 后，把下面的地址换成你的 Worker 域名（见 README-云端推送.md） */
-const PUSH_SERVER = "https://PUSH-YOUR-WORKER.workers.dev/";
+/* 腾讯云 SCF 函数 URL（云端推送服务，见 README-腾讯云推送.md） */
+const PUSH_SERVER = "https://1464976775-1ycxyz62mz.ap-guangzhou.tencentscf.com/";
 const VAPID_PUBLIC_KEY = "BM0xMytwzPRCfi9kfFJv4S8dPJ-0sAeIfTCM6mxj8PFBHBNn8HC1tFHj8MFXb2Mtl9bkO3yUPkX_eAfKlAtiqag";
 
 /* ---------------- 工具 ---------------- */
