@@ -15,6 +15,10 @@
 
 **https://baicarwang-ai.github.io/grow-workbench/**
 
+手机扫这个二维码直接打开（`手机访问二维码.png`）：
+
+![手机访问二维码](手机访问二维码.png)
+
 打开后点页面顶部的「📱 安装到手机主屏幕」提示，即可变成全屏 App，离线也能使用。
 
 > 仓库：https://github.com/baicarwang-ai/grow-workbench
