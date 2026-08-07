@@ -623,25 +623,48 @@ function openMealModal(ds, slot) {
 }
 
 /* ---- 热量估算（基于常见食物热量库） ---- */
+const CN_NUM = { "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5, "六": 6, "七": 7, "八": 8, "九": 9, "十": 10 };
+const UNIT_WORDS = "个|只|根|片|块|碗|杯|份|粒|颗|条|瓶|听|盒|袋|包|把|勺|串";
 function estimateCalories(text) {
   const items = [];
   const unknown = [];
-  const parts = String(text || "").split(/[,，、;；+＋\n\s]+/).filter(Boolean);
+  let parts = String(text || "").split(/[,，、;；+＋\n\s]+/).filter(Boolean);
+  // 中文数量词 → 数字："两个汉堡" → "2个汉堡"
+  parts = parts.map(p => p.replace(new RegExp("([一二两三四五六七八九十])(" + UNIT_WORDS + ")", "g"),
+    (_, a, b) => (CN_NUM[a] || 1) + b));
   for (const part of parts) {
+    // 优先重量单位（g/克/kg/ml），其次个数单位（个/片/碗…）
     const m = part.match(/(\d+(?:\.\d+)?)\s*(g|克|kg|公斤|毫升|ml)/i);
-    let grams = 100, namePart = part.trim();
+    let grams = 0, count = 0, namePart = part.trim(), desc = "";
     if (m) {
       const q = parseFloat(m[1]);
       const unit = m[2].toLowerCase();
       grams = (unit === "kg" || unit === "公斤") ? q * 1000 : q;
       namePart = part.slice(0, m.index).trim();
+    } else {
+      const n = part.match(new RegExp("(\\d+(?:\\.\\d+)?)\\s*(" + UNIT_WORDS + ")"));
+      if (n) {
+        count = parseFloat(n[1]);
+        namePart = part.slice(0, n.index).trim();
+        desc = ` ×${count}${n[2]}`;
+      }
     }
     if (!namePart) continue;
     const f = FOOD_CALORIES.find(x =>
       namePart.includes(x[0]) || x[0].includes(namePart) ||
       (x[2] || []).some(a => namePart.includes(a)));
-    if (f) items.push({ name: namePart, grams: Math.round(grams), kcal: Math.round(grams / 100 * f[1]), per100: f[1] });
-    else unknown.push(namePart + (m ? ` ${m[1]}${m[2]}` : ""));
+    if (f) {
+      let g = grams;
+      if (g <= 0) {
+        // 个数单位 → 按单份克重换算（未标注的按 1 份 ≈ 100g 粗估）
+        const per = FOOD_UNIT_GRAMS[f[0]] || 100;
+        g = Math.round((count || 1) * per);
+      }
+      const kcal = Math.round(g / 100 * f[1]);
+      items.push({ name: namePart, grams: g, kcal, per100: f[1], desc });
+    } else {
+      unknown.push(namePart + (m ? ` ${m[1]}${m[2]}` : ""));
+    }
   }
   return { items, total: items.reduce((a, b) => a + b.kcal, 0), unknown };
 }
@@ -651,7 +674,7 @@ function renderCalEstimate(text) {
   if (!text) { box.innerHTML = ""; return; }
   const res = estimateCalories(text);
   const rows = res.items.map(it =>
-    `<div class="cal-item"><span>${esc(it.name)}</span><span class="muted">${it.grams}g</span><b>${it.kcal} kcal</b></div>`).join("");
+    `<div class="cal-item"><span>${esc(it.name)}</span><span class="muted">${it.desc ? esc(it.desc) + " ≈ " : ""}${it.grams}g</span><b>${it.kcal} kcal</b></div>`).join("");
   const unknownHtml = res.unknown.length
     ? `<div class="cal-unknown">未收录：${res.unknown.map(esc).join("、")}（可留言让我补充）</div>` : "";
   box.innerHTML = `<div class="cal-total">🔥 估算总热量 <b>${res.total}</b> kcal <small>${res.items.length ? "（目标 " + state.settings.calorieGoal + " kcal）" : ""}</small></div>
