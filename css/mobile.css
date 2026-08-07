@@ -25,8 +25,9 @@
   transition: transform .12s ease, box-shadow .12s ease;
 }
 .t-btn:active { transform: translateY(1px); box-shadow: var(--shadow-inset); }
-/* 自动关闭：CSS 动画兜底（不受 iOS 定时器节流影响），时长由 JS 的 --toast-ms 控制 */
-.toast {
+/* 自动关闭：CSS 动画兜底（不受 iOS 定时器节流影响），时长由 JS 的 --toast-ms 控制。
+   动画只挂在 .show 上：未显示时无动画运行，避免"加载即计时"和填充态卡住显示 */
+.toast.show {
   animation: toast-auto-hide .35s ease var(--toast-ms, 6000ms) forwards;
 }
 @keyframes toast-auto-hide {

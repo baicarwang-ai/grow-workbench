@@ -105,10 +105,11 @@ function hideToast(t) {
 }
 /* showToast(icon, title, msg, ms, btn)
    btn = { label, onClick } 可选操作按钮；弹窗自带 ✕ 手动关闭。
-   自动关闭 = JS setTimeout 兜底 + CSS 动画（--toast-ms）双保险，
+   自动关闭 = JS setTimeout 兜底 + CSS 动画（挂在 .show 上，--toast-ms 控制时长）双保险，
    iOS Safari 定时器节流时由 CSS 动画保证准时收起。 */
 function showToast(icon, title, msg, ms = 6000, btn = null) {
   const t = $("#toast");
+  t.style.setProperty("--toast-ms", ms + "ms");
   t.innerHTML = `<span class="t-icon">${icon}</span>
     <div class="t-body">
       <div class="t-title">${esc(title)}</div>
@@ -117,11 +118,9 @@ function showToast(icon, title, msg, ms = 6000, btn = null) {
     </div>
     <button class="t-close" type="button" aria-label="关闭">✕</button>
     <span class="t-progress"></span>`;
-  // 重启自动关闭动画（进度条 + 收起），保证连续弹窗每次都重新计时
-  t.style.animation = "none";
-  t.style.setProperty("--toast-ms", ms + "ms");
+  // 重启自动关闭动画：先移除 .show（取消旧动画/填充态）→ 强制回流 → 重新显示（动画从头计时）
+  t.classList.remove("show");
   void t.offsetWidth;
-  t.style.animation = "";
   t.classList.add("show");
   clearTimeout(t._timer);
   t._timer = setTimeout(() => hideToast(t), ms);
