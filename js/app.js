@@ -3,11 +3,6 @@
  * 数据保存在浏览器 localStorage，导出/导入用于备份。
  * ========================================================================= */
 
-/* ---------------- 云端推送配置 ---------------- */
-/* 腾讯云 SCF 函数 URL（云端推送服务，见 README-腾讯云推送.md） */
-const PUSH_SERVER = "https://1464976775-1ycxyz62mz.ap-guangzhou.tencentscf.com/";
-const VAPID_PUBLIC_KEY = "BM0xMytwzPRCfi9kfFJv4S8dPJ-0sAeIfTCM6mxj8PFBHBNn8HC1tFHj8MFXb2Mtl9bkO3yUPkX_eAfKlAtiqag";
-
 /* ---------------- 工具 ---------------- */
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
@@ -171,136 +166,6 @@ function requestNotifyPermission() {
     }).catch(() => {});
   } else {
     showToast("🔕", "通知被关闭", "请到 系统设置 → 通知 中允许本应用通知，手表才能同步提醒。");
-  }
-}
-
-/* ================= 云端推送（锁屏也能提醒） ================= */
-function pushServerOk() {
-  return PUSH_SERVER.indexOf("PUSH-YOUR-WORKER") === -1;
-}
-function pushSupported() {
-  if (!("serviceWorker" in navigator)) return { ok: false, why: "浏览器不支持 Service Worker" };
-  if (!("PushManager" in window)) {
-    return { ok: false, why: "当前浏览器不支持推送。苹果手机请把工作台「添加到主屏幕」后，从主屏幕图标打开（需 iOS 16.4+）" };
-  }
-  if (!window.isSecureContext) return { ok: false, why: "需要 HTTPS 环境" };
-  if (!pushServerOk()) return { ok: false, why: "云端推送服务尚未部署（见 README-云端推送.md）" };
-  return { ok: true, why: "" };
-}
-function pushUserId() {
-  let id = localStorage.getItem("push_uid");
-  if (!id) { id = "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem("push_uid", id); }
-  return id;
-}
-function pushConfigPayload() {
-  const s = state.settings;
-  return {
-    userId: pushUserId(),
-    config: {
-      waterReminder: s.waterReminder,
-      waterInterval: s.waterInterval,
-      waterStart: s.waterStart,
-      waterEnd: s.waterEnd,
-      sitReminder: s.sitReminder,
-      sitInterval: s.sitInterval,
-      tzOffset: -new Date().getTimezoneOffset(), // UTC - 本地(分钟)
-    },
-  };
-}
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const arr = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-  return arr;
-}
-async function enableCloudPush() {
-  const sup = pushSupported();
-  if (!sup.ok) { showToast("☁️", "无法启用", sup.why); return; }
-  try {
-    if (Notification.permission !== "granted") {
-      const p = await Notification.requestPermission();
-      if (p !== "granted") { showToast("🔕", "需要通知权限", "请允许通知后重试。"); return; }
-    }
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-    }
-    const res = await fetch(PUSH_SERVER + "api/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: pushUserId(), subscription: sub.toJSON() }),
-    });
-    if (!res.ok) throw new Error("subscribe failed " + res.status);
-    const res2 = await fetch(PUSH_SERVER + "api/config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pushConfigPayload()),
-    });
-    if (!res2.ok) throw new Error("config failed " + res2.status);
-    localStorage.setItem("push_enabled", "1");
-    renderPushStatus();
-    showToast("☁️", "云端推送已开启", "锁屏也能收到饮水/久坐提醒，手表同步震动。");
-  } catch (e) {
-    console.error(e);
-    showToast("☁️", "启用失败", "请确认云端服务已部署且可访问，稍后再试。");
-  }
-}
-async function disableCloudPush() {
-  try {
-    if ("serviceWorker" in navigator) {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) await sub.unsubscribe();
-    }
-    if (pushServerOk()) {
-      try { await fetch(PUSH_SERVER + "api/unsubscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: pushUserId() }) }); } catch (e) {}
-    }
-    localStorage.setItem("push_enabled", "0");
-    renderPushStatus();
-    showToast("☁️", "云端推送已关闭", "提醒只在页面打开时生效。");
-  } catch (e) {
-    console.error(e);
-  }
-}
-/* 提醒设置变化时同步配置到云端 */
-async function syncPushConfig() {
-  if (localStorage.getItem("push_enabled") !== "1") return;
-  if (!pushServerOk()) return;
-  try {
-    await fetch(PUSH_SERVER + "api/config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pushConfigPayload()),
-    });
-  } catch (e) { console.error("sync push config failed", e); }
-}
-function renderPushStatus() {
-  const box = $("#cloud-push");
-  if (!box) return;
-  const sup = pushSupported();
-  const enabled = localStorage.getItem("push_enabled") === "1";
-  const btnOn = $("#btn-push-enable"), btnOff = $("#btn-push-disable"), st = $("#push-status");
-  if (!btnOn || !btnOff || !st) return;
-  if (!sup.ok) {
-    st.textContent = "不可用：" + sup.why;
-    st.className = "cp-status cp-off";
-    btnOn.style.display = "none"; btnOff.style.display = "none";
-    return;
-  }
-  if (enabled) {
-    st.textContent = "✅ 已开启 — 锁屏也能收到提醒（手表同步震动）";
-    st.className = "cp-status cp-on";
-    btnOn.style.display = "none"; btnOff.style.display = "inline-block";
-  } else {
-    st.textContent = "未开启 — 开启后锁屏也能准时提醒";
-    st.className = "cp-status";
-    btnOn.style.display = "inline-block"; btnOff.style.display = "none";
   }
 }
 
@@ -483,7 +348,6 @@ function renderSit() {
   $("#sit-reminder").checked = state.settings.sitReminder;
   $("#sit-interval").value = state.settings.sitInterval;
   $("#sit-interval-label").textContent = state.settings.sitInterval;
-  renderPushStatus();
 }
 function logSit() {
   const t = todayStr();
@@ -1390,28 +1254,22 @@ function bindEvents() {
   $("#water-reminder").onchange = (e) => {
     state.settings.waterReminder = e.target.checked;
     if (e.target.checked) requestNotifyPermission();
-    saveState(); renderWater(); syncPushConfig();
+    saveState(); renderWater();
     showToast("💧", e.target.checked ? "饮水提醒已开启" : "饮水提醒已关闭", e.target.checked ? `每 ${state.settings.waterInterval} 分钟提醒一次。` : "");
   };
-  $("#water-interval").onchange = (e) => { state.settings.waterInterval = parseInt(e.target.value) || 60; saveState(); syncPushConfig(); };
-  $("#water-start").onchange = (e) => { state.settings.waterStart = e.target.value; saveState(); syncPushConfig(); };
-  $("#water-end").onchange = (e) => { state.settings.waterEnd = e.target.value; saveState(); syncPushConfig(); };
+  $("#water-interval").onchange = (e) => { state.settings.waterInterval = parseInt(e.target.value) || 60; saveState(); };
+  $("#water-start").onchange = (e) => { state.settings.waterStart = e.target.value; saveState(); };
+  $("#water-end").onchange = (e) => { state.settings.waterEnd = e.target.value; saveState(); };
 
   // 久坐
   $("#sit-reminder").onchange = (e) => {
     state.settings.sitReminder = e.target.checked;
     if (e.target.checked) requestNotifyPermission();
-    saveState(); renderSit(); syncPushConfig();
+    saveState(); renderSit();
     showToast("🧘", e.target.checked ? "久坐提醒已开启" : "久坐提醒已关闭", e.target.checked ? `每 ${state.settings.sitInterval} 分钟提醒起身。` : "");
   };
-  $("#sit-interval").onchange = (e) => { state.settings.sitInterval = parseInt(e.target.value) || 50; saveState(); renderSit(); syncPushConfig(); };
+  $("#sit-interval").onchange = (e) => { state.settings.sitInterval = parseInt(e.target.value) || 50; saveState(); renderSit(); };
   $("#sit-log").onclick = logSit;
-
-  // 云端推送
-  const btnPushOn = $("#btn-push-enable");
-  const btnPushOff = $("#btn-push-disable");
-  if (btnPushOn) btnPushOn.onclick = enableCloudPush;
-  if (btnPushOff) btnPushOff.onclick = disableCloudPush;
 
   // 菜谱
   $("#recipe-search").oninput = (e) => { recipeSearch = e.target.value; renderRecipeGrid(); };
